@@ -1,6 +1,9 @@
+__author__ = 'Kovrizhnykh Alexey'
+
 import socket
 import re
 import threading
+
 
 class FTPException(Exception):
     pass
@@ -141,15 +144,12 @@ class FTPClient:
                 )
             elif code_type == 3:
                 break
-        raise Exception('ACCT not supported')
-        # TODO Сделать
-        # self.send_command('ACCT')
+        raise FTPException('ACCT not supported')
 
     def disconnect(self):
         """
         Отключиться от сервера
         """
-        # TODO Доделать
         if self.debug:
             print('---> Disconnecting...')
         self.control_socket.close()
@@ -240,11 +240,23 @@ class FTPClient:
         file_list = self.recv_from_data_transfer_socket()
         return file_list.decode()
 
+    def get_filename_list(self, pathname=''):
+        self.init_data_transfer_socket()
+        command = 'NLST'
+        if pathname:
+            command += ' ' + pathname
+        self.send_command_std_model(command, expects_100=True)
+        filename_list = self.recv_from_data_transfer_socket().decode().split()
+        return filename_list
+
     def change_to_parent_directory(self):
         self.send_command_std_model('CDUP')
 
     def change_working_directory(self, pathname):
         self.send_command_std_model('CWD ' + pathname)
+
+    def make_directory(self, pathname):
+        self.send_command_std_model('MKD ' + pathname)
 
     def retrieve(self, file_name):
         """
